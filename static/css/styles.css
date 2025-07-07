@@ -114,3 +114,12 @@ canvas {
         width: 100%;
     }
 }
+
+.nav-link {
+    color: rgba(255, 255, 255, 0.75) !important;
+    padding: 0.5rem 1rem;
+}
+
+.nav-link:hover {
+    color: white !important;
+}

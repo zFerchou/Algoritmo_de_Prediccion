@@ -1,60 +1,181 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>Dashboard de Deserción</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dashboard de Deserción Escolar</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Estilos personalizados -->
+    <style>
+        body {
+            padding-top: 60px;
+            background-color: #f8f9fa;
+        }
+        .dashboard-header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            transition: transform 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .card-danger {
+            border-left: 5px solid #e74c3c;
+        }
+        .card-success {
+            border-left: 5px solid #2ecc71;
+        }
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .btn-return {
+            background-color: #3498db;
+            color: white;
+            font-weight: 500;
+        }
+        .btn-return:hover {
+            background-color: #2980b9;
+        }
+    </style>
 </head>
 <body>
-  <h1>Dashboard de Deserción Escolar</h1>
+    {% include 'navbar.html' %}
 
-  <p>Total estudiantes encuestados: {{ total_estudiantes }}</p>
-  <p>Estudiantes en riesgo de abandono: {{ riesgo }} ({{ porcentaje_riesgo }}%)</p>
+    <div class="container">
+        <div class="dashboard-header text-center">
+            <h1>Dashboard de Deserción Escolar</h1>
+            <p class="lead">Análisis de datos de estudiantes en riesgo</p>
+        </div>
 
-  <h3>Porcentaje de estudiantes en riesgo</h3>
-  <canvas id="graficoRiesgo" width="300" height="200"></canvas>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card card-success h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Total de estudiantes encuestados</h5>
+                        <h2 class="card-text">{{ total_estudiantes }}</h2>
+                        <p class="text-muted">Base de datos actual</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card card-danger h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Estudiantes en riesgo</h5>
+                        <h2 class="card-text">{{ riesgo }} <small>({{ porcentaje_riesgo }}%)</small></h2>
+                        <p class="text-muted">Posible deserción escolar</p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-  <h3>Causas comunes de abandono</h3>
-  <canvas id="graficoCausas" width="500" height="300"></canvas>
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <h3 class="mb-4 text-center">Distribución de riesgo</h3>
+                    <canvas id="graficoRiesgo"></canvas>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <h3 class="mb-4 text-center">Principales factores de riesgo</h3>
+                    <canvas id="graficoCausas"></canvas>
+                </div>
+            </div>
+        </div>
 
-  <script>
-    const porcentaje_riesgo = Number("{{ porcentaje_riesgo }}");
-    const causas_labels = JSON.parse('{{ causas.keys()|list|tojson|safe }}');
-    const causas_values = JSON.parse('{{ causas.values()|list|tojson|safe }}');
+        <div class="text-center mt-4 mb-5">
+            <a href="{{ url_for('index') }}" class="btn btn-return btn-lg">← Volver al inicio</a>
+        </div>
+    </div>
 
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Scripts para gráficos -->
+    <script>
+          // Gráfico de dona - Riesgo
     const ctxRiesgo = document.getElementById('graficoRiesgo').getContext('2d');
+    const porcentajeRiesgo = parseFloat("{{ porcentaje_riesgo }}");
+    const porcentajeNoRiesgo = 100 - porcentajeRiesgo;
+    
     new Chart(ctxRiesgo, {
-      type: 'doughnut',
-      data: {
-        labels: ['En riesgo', 'No en riesgo'],
-        datasets: [{
-          label: 'Porcentaje',
-          data: [porcentaje_riesgo, 100 - porcentaje_riesgo],
-          backgroundColor: ['#F44336', '#4CAF50'],
-        }]
-      }
-    });
-
-    const ctxCausas = document.getElementById('graficoCausas').getContext('2d');
-    new Chart(ctxCausas, {
-      type: 'bar',
-      data: {
-        labels: causas_labels,
-        datasets: [{
-          label: 'Número de estudiantes',
-          data: causas_values,
-          backgroundColor: '#2196F3'
-        }]
-      },
-      options: {
-        scales: {
-          y: { beginAtZero: true }
+        type: 'doughnut',
+        data: {
+            labels: ['En riesgo', 'No en riesgo'],
+            datasets: [{
+                data: [porcentajeRiesgo, porcentajeNoRiesgo],
+                backgroundColor: ['#e74c3c', '#2ecc71'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': ' + context.raw + '%';
+                        }
+                    }
+                }
+            }
         }
-      }
     });
-  </script>
 
-  <br><a href="{{ url_for('index') }}">← Volver al formulario</a>
+    // (Duplicate block removed to prevent redeclaration error)
+
+        // Gráfico de barras - Causas
+        const causas_labels = JSON.parse('{{ causas.keys()|list|tojson|safe }}');
+        const causas_values = JSON.parse('{{ causas.values()|list|tojson|safe }}');
+
+        const ctxCausas = document.getElementById('graficoCausas').getContext('2d');
+        new Chart(ctxCausas, {
+            type: 'bar',
+            data: {
+                labels: causas_labels,
+                datasets: [{
+                    label: 'Número de casos',
+                    data: causas_values,
+                    backgroundColor: '#3498db',
+                    borderColor: '#2980b9',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    </script>
 </body>
 </html>

@@ -5,6 +5,10 @@ import os
 app = Flask(__name__)
 CSV_FILE = 'datos_estudiantes.csv'
 
+@app.route('/formulario')
+def formulario():
+    return render_template('formulario.html')
+
 @app.route('/')
 def index():
     return render_template('index.html')
