@@ -1,17 +1,97 @@
-<!-- templates/home.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Inicio - Deserción Escolar</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+ 
 </head>
 <body>
   {% include 'navbar.html' %}
 
-  <div class="container mt-5 pt-5">
-    <h1 class="text-center">Bienvenido al Sistema de Análisis de Deserción Escolar</h1>
-    <p class="lead text-center">Explora los formularios, visualiza datos y ayuda a prevenir el abandono escolar.</p>
+  <!-- Hero Section -->
+  <div class="hero-section text-center">
+    <div class="container">
+      <h1 class="display-4 fw-bold">Bienvenido al Sistema de Análisis de Deserción Escolar</h1>
+      <p class="lead">Explora los formularios, visualiza datos y ayuda a prevenir el abandono escolar</p>
+      <a href="{{ url_for('formulario') }}" class="btn btn-light btn-lg mt-3">Completar Formulario</a>
+    </div>
+  </div>
+
+  <!-- Tarjetas informativas -->
+  <div class="container">
+    <div class="row g-4 mb-5">
+      <div class="col-md-4">
+        <div class="card info-card h-100">
+          <div class="card-body text-center">
+            <div class="card-icon">📊</div>
+            <h3 class="card-title">Datos Alarmantes</h3>
+            <p class="card-text">En América Latina, el 20% de los estudiantes abandona la escuela antes de completar la educación secundaria.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card info-card h-100">
+          <div class="card-body text-center">
+            <div class="card-icon">🔍</div>
+            <h3 class="card-title">Factores Clave</h3>
+            <p class="card-text">Problemas económicos, bajo rendimiento académico y falta de motivación son las principales causas de deserción.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card info-card h-100">
+          <div class="card-body text-center">
+            <div class="card-icon">💡</div>
+            <h3 class="card-title">Nuestra Solución</h3>
+            <p class="card-text">Identificamos estudiantes en riesgo tempranamente para implementar estrategias de retención efectivas.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Estadísticas importantes -->
+    <h2 class="text-center mb-4">Impacto de la Deserción Escolar</h2>
+    <div class="row g-4 mb-5">
+      <div class="col-md-3">
+        <div class="stat-card p-4 text-center">
+          <h3 class="text-primary">30%</h3>
+          <p>Mayor probabilidad de desempleo en quienes no completan secundaria</p>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stat-card p-4 text-center">
+          <h3 class="text-primary">2.5x</h3>
+          <p>Mayor riesgo de pobreza para desertores escolares</p>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stat-card p-4 text-center">
+          <h3 class="text-primary">40%</h3>
+          <p>De los casos pueden prevenirse con intervención temprana</p>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stat-card p-4 text-center">
+          <h3 class="text-primary">60%</h3>
+          <p>De los estudiantes en riesgo muestran señales detectables</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Llamado a la acción -->
+    <div class="card bg-light border-0 mb-5">
+      <div class="card-body text-center p-5">
+        <h2 class="card-title mb-4">¿Cómo puedes ayudar?</h2>
+        <p class="card-text lead mb-4">Tu participación en este sistema permite identificar estudiantes en riesgo y desarrollar estrategias para mantenerlos en la escuela.</p>
+        <div class="d-flex justify-content-center gap-3">
+          <a href="{{ url_for('formulario') }}" class="btn btn-primary-custom btn-lg">Completar Formulario</a>
+          <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary btn-lg">Ver Estadísticas</a>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

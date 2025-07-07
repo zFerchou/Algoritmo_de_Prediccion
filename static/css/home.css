@@ -1,0 +1,46 @@
+/* static/css/home.css */
+body {
+  padding-top: 60px;
+  background-color: #f8f9fa;
+}
+
+.hero-section {
+  background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+  color: white;
+  padding: 4rem 0;
+  margin-bottom: 3rem;
+  border-radius: 10px;
+}
+
+.info-card {
+  transition: transform 0.3s, box-shadow 0.3s;
+  border: none;
+  border-radius: 10px;
+  height: 100%;
+}
+
+.info-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.card-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: #3498db;
+}
+
+.stat-card {
+  background-color: white;
+  border-left: 5px solid #3498db;
+  border-radius: 8px;
+}
+
+.btn-primary-custom {
+  background-color: #3498db;
+  border: none;
+}
+
+.btn-primary-custom:hover {
+  background-color: #2980b9;
+}
