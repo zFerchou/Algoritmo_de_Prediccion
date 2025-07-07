@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Resultados del Estudiante</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>Resultados del Estudiante</h1>
+
+    <h3>Resumen de tus respuestas:</h3>
+    <ul>
+        <li><strong>Comprensión en clase:</strong> {{ comprension }}</li>
+        <li><strong>Emoción al ir a la escuela:</strong> {{ emocion_general }}</li>
+        <li><strong>Frecuencia de estrés por estudios:</strong> {{ estres_estudios }}</li>
+        <li><strong>Apoyo familiar:</strong> {{ apoyo_familiar }}</li>
+        <li><strong>¿Tiene amistades en la escuela?:</strong> {{ amistades_escuela }}</li>
+        <li><strong>Relación con profesores:</strong> {{ relacion_profesores }}</li>
+        <li><strong>Responsabilidades fuera de la escuela:</strong> {{ responsabilidades }}</li>
+        <li><strong>Valor que da a lo que aprende:</strong> {{ valor_educacion }}</li>
+        <li><strong>Probabilidad de terminar el ciclo escolar:</strong> {{ probabilidad_terminar }}</li>
+    </ul>
+
+    <h3>Visualización gráfica:</h3>
+    <canvas id="graficoResultados" width="400" height="250"></canvas>
+
+    <script>
+        const comprension = Number("{{ comprension }}");
+        const estres = Number("{{ estres_estudios }}");
+        const apoyo = Number("{{ apoyo_familiar }}");
+        const relacion = Number("{{ relacion_profesores }}");
+        const terminar = Number("{{ probabilidad_terminar }}");
+
+        const ctx = document.getElementById('graficoResultados').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: [
+                    'Comprensión',
+                    'Estrés',
+                    'Apoyo Familiar',
+                    'Relación con Profesores',
+                    'Probabilidad de Terminar'
+                ],
+                datasets: [{
+                    label: 'Puntuación (1 a 5)',
+                    data: [comprension, estres, apoyo, relacion, terminar],
+                    backgroundColor: [
+                        '#4CAF50',
+                        '#FF9800',
+                        '#2196F3',
+                        '#9C27B0',
+                        '#F44336'
+                    ]
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        suggestedMin: 0,
+                        suggestedMax: 5
+                    }
+                }
+            }
+        });
+    </script>
+
+    <br><a href="{{ url_for('index') }}">← Volver al formulario</a>
+</body>
+</html>

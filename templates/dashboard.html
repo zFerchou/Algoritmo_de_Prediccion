@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dashboard de Deserción</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <h1>Dashboard de Deserción Escolar</h1>
+
+  <p>Total estudiantes encuestados: {{ total_estudiantes }}</p>
+  <p>Estudiantes en riesgo de abandono: {{ riesgo }} ({{ porcentaje_riesgo }}%)</p>
+
+  <h3>Porcentaje de estudiantes en riesgo</h3>
+  <canvas id="graficoRiesgo" width="300" height="200"></canvas>
+
+  <h3>Causas comunes de abandono</h3>
+  <canvas id="graficoCausas" width="500" height="300"></canvas>
+
+  <script>
+    const porcentaje_riesgo = Number("{{ porcentaje_riesgo }}");
+    const causas_labels = JSON.parse('{{ causas.keys()|list|tojson|safe }}');
+    const causas_values = JSON.parse('{{ causas.values()|list|tojson|safe }}');
+
+    const ctxRiesgo = document.getElementById('graficoRiesgo').getContext('2d');
+    new Chart(ctxRiesgo, {
+      type: 'doughnut',
+      data: {
+        labels: ['En riesgo', 'No en riesgo'],
+        datasets: [{
+          label: 'Porcentaje',
+          data: [porcentaje_riesgo, 100 - porcentaje_riesgo],
+          backgroundColor: ['#F44336', '#4CAF50'],
+        }]
+      }
+    });
+
+    const ctxCausas = document.getElementById('graficoCausas').getContext('2d');
+    new Chart(ctxCausas, {
+      type: 'bar',
+      data: {
+        labels: causas_labels,
+        datasets: [{
+          label: 'Número de estudiantes',
+          data: causas_values,
+          backgroundColor: '#2196F3'
+        }]
+      },
+      options: {
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+  </script>
+
+  <br><a href="{{ url_for('index') }}">← Volver al formulario</a>
+</body>
+</html>

@@ -1,0 +1,116 @@
+
+/* Estilo general */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f6f9;
+    margin: 0;
+    padding: 0;
+    color: #333;
+}
+
+.container, .content-box {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 30px;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Encabezados */
+h1, h2, h3 {
+    text-align: center;
+    color: #2c3e50;
+}
+
+/* Párrafos */
+p {
+    text-align: center;
+    font-size: 1.1em;
+    color: #555;
+}
+
+/* Formularios */
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: block;
+}
+
+select, input[type="text"], input[type="number"] {
+    width: 100%;
+    padding: 10px;
+    font-size: 1rem;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    background-color: #fdfdfd;
+}
+
+input[type="submit"], a.button {
+    background-color: #3498db;
+    color: white;
+    padding: 12px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    margin-top: 20px;
+    width: 100%;
+}
+
+input[type="submit"]:hover, a.button:hover {
+    background-color: #2980b9;
+}
+
+/* Listas de resultados */
+ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+ul li {
+    background-color: #ecf0f1;
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 6px;
+}
+
+/* Enlaces */
+a {
+    color: #2980b9;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Gráficos */
+canvas {
+    display: block;
+    margin: 20px auto;
+    max-width: 90%;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .container, .content-box {
+        padding: 20px;
+        margin: 20px;
+    }
+
+    input[type="submit"], a.button {
+        width: 100%;
+    }
+}
