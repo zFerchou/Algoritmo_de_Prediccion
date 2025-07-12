@@ -1,0 +1,41 @@
+body {
+            padding-top: 60px;
+            background-color: #f8f9fa;
+        }
+        .dashboard-header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            transition: transform 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .card-danger {
+            border-left: 5px solid #e74c3c;
+        }
+        .card-success {
+            border-left: 5px solid #2ecc71;
+        }
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .btn-return {
+            background-color: #3498db;
+            color: white;
+            font-weight: 500;
+        }
+        .btn-return:hover {
+            background-color: #2980b9;
+        }
