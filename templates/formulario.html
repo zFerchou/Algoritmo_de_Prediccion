@@ -7,132 +7,139 @@
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/formulario.css') }}">
-
 </head>
 <body>
     {% include 'navbar.html' %}
 
-    <!-- ... HEAD igual ... -->
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow-lg">
+                    <div class="card-header bg-primary text-white">
+                        <h2 class="text-center mb-0">Evaluación de Bienestar Escolar</h2>
+                    </div>
+                    <div class="card-body p-4">
+                        <form action="/resultados" method="POST">
+                            <!-- Pregunta 1 -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">1. ¿Qué tan fácil se te hace entender los temas en clase?</label>
+                                <select name="comprension" class="form-select form-select-lg" required>
+                                    <option value="" disabled selected>Selecciona una opción</option>
+                                    <option value="1">Muy difícil</option>
+                                    <option value="2">Difícil</option>
+                                    <option value="3">Regular</option>
+                                    <option value="4">Fácil</option>
+                                    <option value="5">Muy fácil</option>
+                                </select>
+                            </div>
 
-<form action="/resultados" method="POST">
+                            <!-- Pregunta 2 -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">2. ¿Cómo te sientes al ir a la escuela la mayoría de los días?</label>
+                                <select name="emocion_general" class="form-select form-select-lg" required>
+                                    <option value="" disabled selected>Selecciona una opción</option>
+                                    <option value="3">Bien</option>
+                                    <option value="2">Indiferente</option>
+                                    <option value="1">Mal</option>
+                                </select>
+                            </div>
 
-    <!-- Pregunta 1 -->
-    <div class="mb-3">
-        <label class="form-label">¿Qué tan fácil se te hace entender los temas en clase?</label>
-        <select name="comprension" class="form-select" required>
-            <option value="" disabled selected>Selecciona una opción</option>
-            <option value="1">Muy difícil</option>
-            <option value="2">Difícil</option>
-            <option value="3">Regular</option>
-            <option value="4">Fácil</option>
-            <option value="5">Muy fácil</option>
-        </select>
-    </div>
+                            <!-- Pregunta 3 -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">3. ¿Con qué frecuencia te sientes estresado por tus estudios?</label>
+                                <select name="estres_estudios" class="form-select form-select-lg" required>
+                                    <option value="" disabled selected>Selecciona una opción</option>
+                                    <option value="1">Nunca</option>
+                                    <option value="2">Casi nunca</option>
+                                    <option value="3">A veces</option>
+                                    <option value="4">Frecuentemente</option>
+                                    <option value="5">Siempre</option>
+                                </select>
+                            </div>
 
-    <!-- Pregunta 2 - Corregido: valores numéricos -->
-    <div class="mb-3">
-        <label class="form-label">¿Cómo te sientes al ir a la escuela la mayoría de los días?</label>
-        <select name="emocion_general" class="form-select" required>
-            <option value="" disabled selected>Selecciona una opción</option>
-            <option value="3">Bien</option>
-            <option value="2">Indiferente</option>
-            <option value="1">Mal</option>
-        </select>
-    </div>
+                            <!-- Pregunta 4 -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">4. ¿Te sientes apoyado por tu familia en tus estudios?</label>
+                                <select name="apoyo_familiar" class="form-select form-select-lg" required>
+                                    <option value="" disabled selected>Selecciona una opción</option>
+                                    <option value="1">Nada apoyado</option>
+                                    <option value="2">Poco apoyado</option>
+                                    <option value="3">Algo apoyado</option>
+                                    <option value="4">Muy apoyado</option>
+                                    <option value="5">Totalmente apoyado</option>
+                                </select>
+                            </div>
 
-    <!-- Pregunta 3 -->
-    <div class="mb-3">
-        <label class="form-label">¿Con qué frecuencia te sientes estresado por tus estudios?</label>
-        <select name="estres_estudios" class="form-select" required>
-            <option value="" disabled selected>Selecciona una opción</option>
-            <option value="1">Nunca</option>
-            <option value="2">Casi nunca</option>
-            <option value="3">A veces</option>
-            <option value="4">Frecuentemente</option>
-            <option value="5">Siempre</option>
-        </select>
-    </div>
+                            <!-- Pregunta 5 -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">5. ¿Tienes al menos una persona con quien hablar en la escuela?</label>
+                                <select name="amistades_escuela" class="form-select form-select-lg" required>
+                                    <option value="" disabled selected>Selecciona una opción</option>
+                                    <option value="1">Sí</option>
+                                    <option value="0">No</option>
+                                </select>
+                            </div>
 
-    <!-- Pregunta 4 -->
-    <div class="mb-3">
-        <label class="form-label">¿Te sientes apoyado por tu familia en tus estudios?</label>
-        <select name="apoyo_familiar" class="form-select" required>
-            <option value="" disabled selected>Selecciona una opción</option>
-            <option value="1">Nada apoyado</option>
-            <option value="2">Poco apoyado</option>
-            <option value="3">Algo apoyado</option>
-            <option value="4">Muy apoyado</option>
-            <option value="5">Totalmente apoyado</option>
-        </select>
-    </div>
+                            <!-- Pregunta 6 -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">6. ¿Cómo te llevas con tus profesores?</label>
+                                <select name="relacion_profesores" class="form-select form-select-lg" required>
+                                    <option value="" disabled selected>Selecciona una opción</option>
+                                    <option value="1">Muy mal</option>
+                                    <option value="2">Mal</option>
+                                    <option value="3">Regular</option>
+                                    <option value="4">Bien</option>
+                                    <option value="5">Muy bien</option>
+                                </select>
+                            </div>
 
-    <!-- Pregunta 5 - Corregido: 1 = sí, 0 = no -->
-    <div class="mb-3">
-        <label class="form-label">¿Tienes al menos una persona con quien hablar en la escuela?</label>
-        <select name="amistades_escuela" class="form-select" required>
-            <option value="" disabled selected>Selecciona una opción</option>
-            <option value="1">Sí</option>
-            <option value="0">No</option>
-        </select>
-    </div>
+                            <!-- Pregunta 7 -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">7. ¿Tienes que trabajar o ayudar mucho en casa?</label>
+                                <select name="responsabilidades" class="form-select form-select-lg" required>
+                                    <option value="" disabled selected>Selecciona una opción</option>
+                                    <option value="1">Sí</option>
+                                    <option value="0">No</option>
+                                </select>
+                            </div>
 
-    <!-- Pregunta 6 -->
-    <div class="mb-3">
-        <label class="form-label">¿Cómo te llevas con tus profesores?</label>
-        <select name="relacion_profesores" class="form-select" required>
-            <option value="" disabled selected>Selecciona una opción</option>
-            <option value="1">Muy mal</option>
-            <option value="2">Mal</option>
-            <option value="3">Regular</option>
-            <option value="4">Bien</option>
-            <option value="5">Muy bien</option>
-        </select>
-    </div>
+                            <!-- Pregunta 8 -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">8. ¿Sientes que lo que aprendes en la escuela es útil para tu vida?</label>
+                                <select name="valor_educacion" class="form-select form-select-lg" required>
+                                    <option value="" disabled selected>Selecciona una opción</option>
+                                    <option value="1">Nada útil</option>
+                                    <option value="2">Poco útil</option>
+                                    <option value="3">Regular</option>
+                                    <option value="4">Útil</option>
+                                    <option value="5">Muy útil</option>
+                                </select>
+                            </div>
 
-    <!-- Pregunta 7 - Corregido: 1 = sí, 0 = no -->
-    <div class="mb-3">
-        <label class="form-label">¿Tienes que trabajar o ayudar mucho en casa?</label>
-        <select name="responsabilidades" class="form-select" required>
-            <option value="" disabled selected>Selecciona una opción</option>
-            <option value="1">Sí</option>
-            <option value="0">No</option>
-        </select>
-    </div>
+                            <!-- Pregunta 9 -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">9. ¿Qué tan probable crees que es que termines este ciclo escolar?</label>
+                                <select name="probabilidad_terminar" class="form-select form-select-lg" required>
+                                    <option value="" disabled selected>Selecciona una opción</option>
+                                    <option value="1">Nada probable</option>
+                                    <option value="2">Poco probable</option>
+                                    <option value="3">Posible</option>
+                                    <option value="4">Muy probable</option>
+                                    <option value="5">Totalmente seguro</option>
+                                </select>
+                            </div>
 
-    <!-- Pregunta 8 -->
-    <div class="mb-3">
-        <label class="form-label">¿Sientes que lo que aprendes en la escuela es útil para tu vida?</label>
-        <select name="valor_educacion" class="form-select" required>
-            <option value="" disabled selected>Selecciona una opción</option>
-            <option value="1">Nada útil</option>
-            <option value="2">Poco útil</option>
-            <option value="3">Regular</option>
-            <option value="4">Útil</option>
-            <option value="5">Muy útil</option>
-        </select>
-    </div>
-
-    <!-- Pregunta 9 -->
-    <div class="mb-3">
-        <label class="form-label">¿Qué tan probable crees que es que termines este ciclo escolar?</label>
-        <select name="probabilidad_terminar" class="form-select" required>
-            <option value="" disabled selected>Selecciona una opción</option>
-            <option value="1">Nada probable</option>
-            <option value="2">Poco probable</option>
-            <option value="3">Posible</option>
-            <option value="4">Muy probable</option>
-            <option value="5">Totalmente seguro</option>
-        </select>
-    </div>
-
-    <!-- Botón -->
-    <div class="text-center mt-4">
-        <button type="submit" class="btn btn-primary btn-lg">Enviar respuestas</button>
-    </div>
-
-</form>
-
-                    </form>
+                            <!-- Botón de envío -->
+                            <div class="text-center mt-5">
+                                <button type="submit" class="btn btn-primary btn-lg px-5 py-3">
+                                    <i class="bi bi-send-fill me-2"></i> Enviar respuestas
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="card-footer bg-light text-center">
+                        <small class="text-muted">Tus respuestas son confidenciales y se usarán solo para mejorar tu experiencia educativa</small>
+                    </div>
                 </div>
             </div>
         </div>
@@ -140,5 +147,7 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 </body>
 </html>
