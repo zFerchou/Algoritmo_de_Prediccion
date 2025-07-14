@@ -2,17 +2,20 @@ from flask import Flask, render_template, request
 import pandas as pd
 import os
 import joblib
+import numpy as np
 
 app = Flask(__name__)
 CSV_FILE = 'datos_estudiantes.csv'
 
-# Cargar modelo y escalador si existen
-if os.path.exists('modelo_entrenado.pkl') and os.path.exists('escalador.pkl'):
-    modelo = joblib.load('modelo_entrenado.pkl')  # Este debe ser un modelo multiclase
+# Cargar modelo, escalador y clases si existen
+if all(os.path.exists(f) for f in ['modelo_entrenado.pkl', 'escalador.pkl', 'clases_modelo.pkl']):
+    modelo = joblib.load('modelo_entrenado.pkl')
     escalador = joblib.load('escalador.pkl')
+    clases_modelo = joblib.load('clases_modelo.pkl')
 else:
     modelo = None
     escalador = None
+    clases_modelo = None
 
 @app.route('/formulario')
 def formulario():
@@ -37,68 +40,130 @@ def resultados():
         'probabilidad_terminar': request.form.get('probabilidad_terminar')
     }
 
-    # Guardar datos en CSV
-    if os.path.isfile(CSV_FILE):
-        df = pd.read_csv(CSV_FILE)
-        df = pd.concat([df, pd.DataFrame([datos])], ignore_index=True)
-    else:
-        df = pd.DataFrame([datos])
+    # Inicializar variables de resultado
+    datos.update({
+        'probabilidad_abandono': 'N/A',
+        'motivo_principal': 'No evaluado',
+        'confianza_principal': 'N/A',
+        'motivos_secundarios': [],
+        'riesgo_alto': False,
+        'error': None
+    })
 
-    df.to_csv(CSV_FILE, index=False)
+    # Mapear variables categóricas a numéricas
+    mapeos = {
+        'emocion_general': {'bien': 5, 'indiferente': 3, 'mal': 1},
+        'amistades_escuela': {'si': 5, 'no': 1},
+        'responsabilidades': {'si': 1, 'no': 5}
+    }
+    for key, mapping in mapeos.items():
+        datos[key] = mapping.get(datos[key], 3)  # 3 como valor neutral si falta
+
+    # Guardar datos en CSV
+    try:
+        if os.path.isfile(CSV_FILE):
+            df = pd.read_csv(CSV_FILE)
+            df = pd.concat([df, pd.DataFrame([datos])], ignore_index=True)
+        else:
+            df = pd.DataFrame([datos])
+        df.to_csv(CSV_FILE, index=False)
+    except Exception as e:
+        datos['error'] = f"Error al guardar datos: {str(e)}"
 
     # Evaluar causa de abandono con el modelo si está disponible
-    if modelo and escalador:
-        entrada = [[
-            float(datos['comprension']),
-            float(datos['emocion_general']),
-            float(datos['estres_estudios']),
-            float(datos['apoyo_familiar']),
-            float(datos['amistades_escuela']),
-            float(datos['relacion_profesores']),
-            float(datos['responsabilidades']),
-            float(datos['valor_educacion']),
-            float(datos['probabilidad_terminar'])
-        ]]
+    if modelo and escalador and clases_modelo is not None:
+        try:
+            entrada = [[
+                float(datos['comprension']),
+                float(datos['emocion_general']),
+                float(datos['estres_estudios']),
+                float(datos['apoyo_familiar']),
+                float(datos['amistades_escuela']),
+                float(datos['relacion_profesores']),
+                float(datos['responsabilidades']),
+                float(datos['valor_educacion']),
+                float(datos['probabilidad_terminar'])
+            ]]
 
-        entrada_esc = escalador.transform(entrada)
+            entrada_esc = escalador.transform(entrada)
+            probabilidades = modelo.predict_proba(entrada_esc)[0]
+            prediccion = modelo.predict(entrada_esc)[0]
+            
+            # Calcular probabilidad de abandono (1 - probabilidad de 'ninguno')
+            if 'ninguno' in clases_modelo:
+                prob_ninguno = probabilidades[np.where(clases_modelo == 'ninguno')[0][0]]
+                prob_abandono = round((1 - prob_ninguno) * 100, 2)
+            else:
+                prob_abandono = round((1 - max(probabilidades)) * 100, 2)
+            
+            # Obtener top 3 causas (excluyendo 'ninguno' si existe)
+            top_3_indices = np.argsort(probabilidades)[-3:][::-1]
+            causas_predichas = [
+                (clases_modelo[i], round(probabilidades[i]*100, 2))
+                for i in top_3_indices if 'ninguno' not in str(clases_modelo[i]).lower()
+            ]
 
-        prediccion = modelo.predict(entrada_esc)[0]
-        probabilidades = modelo.predict_proba(entrada_esc)[0]
-        confianza = round(max(probabilidades) * 100, 2)
+            datos.update({
+                'probabilidad_abandono': prob_abandono,
+                'motivo_principal': prediccion if 'ninguno' not in str(prediccion).lower() else 'Bajo riesgo',
+                'confianza_principal': round(max(probabilidades) * 100, 2),
+                'motivos_secundarios': causas_predichas[1:] if len(causas_predichas) > 1 else [],
+                'riesgo_alto': float(datos['probabilidad_terminar']) <= 2
+            })
 
-        datos['motivo_predicho'] = prediccion  # e.g., "depresión", "economía", etc.
-        datos['confianza'] = confianza
+        except ValueError as e:
+            datos['error'] = f"Error en valores numéricos: {str(e)}"
+        except Exception as e:
+            datos['error'] = f"Error en el modelo: {str(e)}"
     else:
-        datos['motivo_predicho'] = 'Modelo no entrenado'
-        datos['confianza'] = 'N/A'
+        datos['error'] = "Modelo no disponible"
 
     return render_template('resultados.html', **datos)
 
 @app.route('/dashboard')
 def dashboard():
     if not os.path.isfile(CSV_FILE):
-        return render_template('dashboard.html', total_estudiantes=0, riesgo=0, porcentaje_riesgo=0, causas={})
+        return render_template('dashboard.html', 
+                            total_estudiantes=0, 
+                            riesgo=0, 
+                            porcentaje_riesgo=0, 
+                            causas={},
+                            causas_detalladas={})
 
     df = pd.read_csv(CSV_FILE)
 
-    for col in ['probabilidad_terminar', 'estres_estudios', 'apoyo_familiar', 'relacion_profesores', 'comprension']:
-        df[col] = pd.to_numeric(df[col], errors='coerce')
+    # Convertir columnas numéricas
+    columnas_numericas = [
+        'comprension', 'emocion_general', 'estres_estudios',
+        'apoyo_familiar', 'amistades_escuela', 'relacion_profesores',
+        'responsabilidades', 'valor_educacion', 'probabilidad_terminar'
+    ]
+    df[columnas_numericas] = df[columnas_numericas].apply(pd.to_numeric, errors='coerce')
+    df = df.dropna(subset=columnas_numericas)
 
+    # Identificar estudiantes en riesgo
     riesgo_df = df[df['probabilidad_terminar'] <= 2]
     porcentaje_riesgo = round(len(riesgo_df) / len(df) * 100, 2) if len(df) > 0 else 0
 
-    causas = {
+    # Causas básicas
+    causas_basicas = {
         'Estrés alto': len(riesgo_df[riesgo_df['estres_estudios'] >= 4]),
         'Bajo apoyo familiar': len(riesgo_df[riesgo_df['apoyo_familiar'] <= 2]),
         'Mala relación con profesores': len(riesgo_df[riesgo_df['relacion_profesores'] <= 2]),
         'Baja comprensión': len(riesgo_df[riesgo_df['comprension'] <= 2])
     }
 
+    # Causas detalladas
+    causas_detalladas = {}
+    if modelo and 'causa_desercion' in df.columns:
+        causas_detalladas = df[df['probabilidad_terminar'] <= 2]['causa_desercion'].value_counts().to_dict()
+
     return render_template('dashboard.html',
-                           porcentaje_riesgo=porcentaje_riesgo,
-                           causas=causas,
-                           total_estudiantes=len(df),
-                           riesgo=len(riesgo_df))
+                        porcentaje_riesgo=porcentaje_riesgo,
+                        causas=causas_basicas,
+                        causas_detalladas=causas_detalladas,
+                        total_estudiantes=len(df),
+                        riesgo=len(riesgo_df))
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -1,44 +1,69 @@
-# modelo_causa.py
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import joblib
+import numpy as np
 
-CSV_FILE = 'datos_estudiantes.csv'
+def categorizar_causa(row):
+    """Función para crear categorías más específicas basadas en combinaciones de características"""
+    if row['probabilidad_terminar'] <= 2:
+        if row['estres_estudios'] >= 4 and row['apoyo_familiar'] <= 2:
+            return 'estrés_crónico_falta_apoyo'
+        elif row['comprension'] <= 2 and row['relacion_profesores'] <= 2:
+            return 'dificultad_académica'
+        elif row['emocion_general'] <= 2 and row['amistades_escuela'] <= 2:
+            return 'aislamiento_social'
+        elif row['responsabilidades'] >= 4:
+            return 'sobrecarga_responsabilidades'
+        elif row['valor_educacion'] <= 2:
+            return 'falta_motivación'
+        elif row['apoyo_familiar'] <= 1:
+            return 'problemas_familiares'
+        else:
+            return 'multifactorial'
+    else:
+        return 'ninguno'
 
 def entrenar_modelo_causa():
-    df = pd.read_csv(CSV_FILE)
+    df = pd.read_csv("datos_estudiantes.csv")
     
-    # Reemplazar espacios en los nombres de columnas por guiones bajos
-    df.columns = df.columns.str.replace(' ', '_')
+    # Mapear variables categóricas
+    mapeos = {
+        'emocion_general': {'bien': 5, 'indiferente': 3, 'mal': 1},
+        'amistades_escuela': {'si': 5, 'no': 1},
+        'responsabilidades': {'si': 1, 'no': 5}
+    }
+    df.replace(mapeos, inplace=True)
 
-    columnas = ['comprension', 'estres_estudios', 'apoyo_familiar', 'relacion_profesores']
+    # Convertir y limpiar datos
+    columnas = [
+        'comprension', 'emocion_general', 'estres_estudios',
+        'apoyo_familiar', 'amistades_escuela', 'relacion_profesores',
+        'responsabilidades', 'valor_educacion', 'probabilidad_terminar'
+    ]
     df[columnas] = df[columnas].apply(pd.to_numeric, errors='coerce')
+    df = df.dropna()
 
-    # Asegurarse que existe la columna 'causa_desercion'
-    if 'causa_desercion' not in df.columns:
-        raise ValueError("La columna 'causa_desercion' no existe en el CSV.")
+    # Crear categorías específicas
+    df['causa_desercion'] = df.apply(categorizar_causa, axis=1)
 
-    # Eliminar datos faltantes
-    df = df.dropna(subset=columnas + ['causa_desercion'])
-
+    # Entrenar modelo
     X = df[columnas]
-    y = df['causa_desercion']  # Valores como: 'depresión', 'economía', 'tristeza', 'se queda'
-
-    # Escalar los datos
+    y = df['causa_desercion']
+    
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
 
-    # Modelo multiclase
-    modelo = LogisticRegression(multi_class='multinomial', solver='lbfgs', max_iter=1000)
+    modelo = LogisticRegression(multi_class='multinomial', max_iter=2000, class_weight='balanced')
     modelo.fit(X_scaled, y)
 
-    # Guardar modelo y escalador
-    joblib.dump(modelo, 'modelo_entrenado_causa.pkl')
-    joblib.dump(scaler, 'escalador_causa.pkl')
-
-    print("✅ Modelo de causa entrenado y guardado correctamente.")
+    # Guardar
+    joblib.dump(modelo, 'modelo_entrenado.pkl')
+    joblib.dump(scaler, 'escalador.pkl')
+    joblib.dump(modelo.classes_, 'clases_modelo.pkl')  # Guardar las clases
+    
+    print("✅ Modelo entrenado con categorías específicas")
+    print("Categorías disponibles:", modelo.classes_)
 
 if __name__ == '__main__':
     entrenar_modelo_causa()
