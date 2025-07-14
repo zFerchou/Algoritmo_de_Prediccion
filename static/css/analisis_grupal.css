@@ -1,0 +1,15 @@
+.alto-riesgo { background-color: #ffdddd; }
+        .medio-riesgo { background-color: #fff3cd; }
+        .bajo-riesgo { background-color: #d4edda; }
+        .progress { height: 20px; }
+        .upload-area {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+        .upload-area:hover {
+            border-color: #999;
+            background-color: #f8f9fa;
+        }

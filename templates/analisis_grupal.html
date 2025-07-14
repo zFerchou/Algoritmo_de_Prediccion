@@ -5,6 +5,7 @@
     <title>Análisis Grupal</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         .alto-riesgo { background-color: #ffdddd; }
         .medio-riesgo { background-color: #fff3cd; }
@@ -21,6 +22,22 @@
             border-color: #999;
             background-color: #f8f9fa;
         }
+        .variable-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .variable-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .variable-card.selected {
+            border: 2px solid #0d6efd;
+            background-color: #f0f7ff;
+        }
+        .variable-icon {
+            font-size: 1.5rem;
+            margin-right: 0.5rem;
+        }
     </style>
 </head>
 <body>
@@ -35,16 +52,125 @@
                 <h3 class="mb-0">Cargar Datos</h3>
             </div>
             <div class="card-body">
-                <form method="POST" enctype="multipart/form-data" action="{{ url_for('analisis_grupal') }}">
+                <form method="POST" enctype="multipart/form-data" action="{{ url_for('analisis_grupal') }}" id="analisisForm">
                     <div class="mb-3">
                         <label for="archivo_csv" class="form-label">Seleccionar archivo CSV:</label>
                         <input class="form-control" type="file" id="archivo_csv" name="archivo_csv" accept=".csv" required>
-                        <div class="form-text">El archivo debe contener las columnas: nombre, comprension, emocion_general, etc.</div>
+                        <div class="form-text">El archivo debe contener las columnas requeridas para las variables seleccionadas.</div>
                     </div>
+
+                    <!-- Selección de variables -->
+                    <div class="mb-4">
+                        <h5 class="mb-3">Selecciona las variables a incluir en el análisis:</h5>
+                        <div class="row g-3">
+                            <!-- Variables académicas -->
+                            <div class="col-md-6">
+                                <div class="card variable-card mb-3" onclick="toggleVariable(this, 'comprension')">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="bi bi-book variable-icon"></i> Comprensión en clase
+                                        </h6>
+                                        <p class="card-text text-muted small">Nivel de comprensión del estudiante en las clases.</p>
+                                        <input type="checkbox" name="variables" value="comprension" class="d-none" checked>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="card variable-card mb-3" onclick="toggleVariable(this, 'valor_educacion')">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="bi bi-award variable-icon"></i> Valor de la educación
+                                        </h6>
+                                        <p class="card-text text-muted small">Importancia que el estudiante da a lo que aprende.</p>
+                                        <input type="checkbox" name="variables" value="valor_educacion" class="d-none" checked>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Variables emocionales -->
+                            <div class="col-md-6">
+                                <div class="card variable-card mb-3" onclick="toggleVariable(this, 'emocion_general')">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="bi bi-emoji-smile variable-icon"></i> Emoción al ir a la escuela
+                                        </h6>
+                                        <p class="card-text text-muted small">Sentimientos del estudiante al asistir a la escuela.</p>
+                                        <input type="checkbox" name="variables" value="emocion_general" class="d-none" checked>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="card variable-card mb-3" onclick="toggleVariable(this, 'estres_estudios')">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="bi bi-emoji-frown variable-icon"></i> Estrés por estudios
+                                        </h6>
+                                        <p class="card-text text-muted small">Nivel de estrés relacionado con el trabajo académico.</p>
+                                        <input type="checkbox" name="variables" value="estres_estudios" class="d-none" checked>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Variables sociales -->
+                            <div class="col-md-6">
+                                <div class="card variable-card mb-3" onclick="toggleVariable(this, 'apoyo_familiar')">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="bi bi-people-fill variable-icon"></i> Apoyo familiar
+                                        </h6>
+                                        <p class="card-text text-muted small">Nivel de apoyo que recibe de su familia.</p>
+                                        <input type="checkbox" name="variables" value="apoyo_familiar" class="d-none" checked>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="card variable-card mb-3" onclick="toggleVariable(this, 'amistades_escuela')">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="bi bi-person-plus variable-icon"></i> Amistades en la escuela
+                                        </h6>
+                                        <p class="card-text text-muted small">Si el estudiante tiene amigos en la escuela.</p>
+                                        <input type="checkbox" name="variables" value="amistades_escuela" class="d-none" checked>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="card variable-card mb-3" onclick="toggleVariable(this, 'relacion_profesores')">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="bi bi-person-video3 variable-icon"></i> Relación con profesores
+                                        </h6>
+                                        <p class="card-text text-muted small">Calidad de la relación con sus profesores.</p>
+                                        <input type="checkbox" name="variables" value="relacion_profesores" class="d-none" checked>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Variables de responsabilidad -->
+                            <div class="col-md-6">
+                                <div class="card variable-card mb-3" onclick="toggleVariable(this, 'responsabilidades')">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="bi bi-briefcase variable-icon"></i> Responsabilidades externas
+                                        </h6>
+                                        <p class="card-text text-muted small">Si tiene responsabilidades fuera de la escuela.</p>
+                                        <input type="checkbox" name="variables" value="responsabilidades" class="d-none" checked>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="d-flex justify-content-between">
-                        <button type="submit" class="btn btn-primary">Analizar Archivo</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-gear"></i> Ejecutar Análisis
+                        </button>
                         <a href="{{ url_for('analisis_grupal') }}" class="btn btn-outline-secondary">
-                            Usar datos registrados
+                            <i class="bi bi-database"></i> Usar datos registrados
                         </a>
                     </div>
                 </form>
@@ -53,7 +179,16 @@
 
         {% if mensaje %}
             <div class="alert alert-info">{{ mensaje }}</div>
-        {% else %}
+        {% endif %}
+
+        {% if variables_seleccionadas %}
+            <div class="alert alert-info">
+                <strong>Variables analizadas:</strong> 
+                {{ variables_seleccionadas|join(", ") }}
+            </div>
+        {% endif %}
+
+        {% if total_estudiantes %}
             <!-- Resumen -->
             <div class="card mb-4">
                 <div class="card-header bg-info text-white">
@@ -120,7 +255,7 @@
                                                 {% elif estudiante.probabilidad_abandono > 40 %}bg-warning
                                                 {% else %}bg-success{% endif %}" 
                                                 role="progressbar" 
-                                                
+                                            
                                                 aria-valuenow="{{ estudiante.probabilidad_abandono }}" 
                                                 aria-valuemin="0" 
                                                 aria-valuemax="100">
@@ -164,7 +299,31 @@
                 order: [[2, 'desc']],
                 pageLength: 10
             });
+
+            // Inicializar variables seleccionadas
+            $('.variable-card').each(function() {
+                const checkbox = $(this).find('input[type="checkbox"]');
+                if (checkbox.prop('checked')) {
+                    $(this).addClass('selected');
+                }
+            });
         });
+
+        function toggleVariable(card, variableName) {
+            const checkbox = $(card).find('input[type="checkbox"]');
+            const isChecked = checkbox.prop('checked');
+            
+            checkbox.prop('checked', !isChecked);
+            $(card).toggleClass('selected', !isChecked);
+            
+            // Validar que al menos una variable esté seleccionada
+            const selectedCount = $('input[name="variables"]:checked').length;
+            if (selectedCount === 0) {
+                checkbox.prop('checked', true);
+                $(card).addClass('selected');
+                alert('Debes seleccionar al menos una variable para el análisis');
+            }
+        }
     </script>
 </body>
 </html>

@@ -16,11 +16,19 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Cargar modelo, escalador y clases si existen
-if all(os.path.exists(f) for f in ['modelo_entrenado.pkl', 'escalador.pkl', 'clases_modelo.pkl']):
-    modelo = joblib.load('modelo_entrenado.pkl')
-    escalador = joblib.load('escalador.pkl')
-    clases_modelo = joblib.load('clases_modelo.pkl')
-else:
+try:
+    if all(os.path.exists(f) for f in ['modelo_entrenado.pkl', 'escalador.pkl', 'clases_modelo.pkl']):
+        modelo = joblib.load('modelo_entrenado.pkl')
+        escalador = joblib.load('escalador.pkl')
+        clases_modelo = joblib.load('clases_modelo.pkl')
+        print(" Modelos cargados correctamente")
+    else:
+        modelo = None
+        escalador = None
+        clases_modelo = None
+        print("⚠️ Advertencia: No se encontraron todos los archivos del modelo")
+except Exception as e:
+    print(f" Error al cargar modelos: {str(e)}")
     modelo = None
     escalador = None
     clases_modelo = None
@@ -29,32 +37,64 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def calcular_probabilidad_abandono(entrada):
-    entrada_esc = escalador.transform(entrada)
-    probabilidades = modelo.predict_proba(entrada_esc)[0]
-    
-    if 'ninguno' in clases_modelo:
-        prob_ninguno = probabilidades[np.where(clases_modelo == 'ninguno')[0][0]]
-        return round((1 - prob_ninguno) * 100, 2), modelo.predict(entrada_esc)[0], round(max(probabilidades) * 100, 2)
-    else:
-        return round((1 - max(probabilidades)) * 100, 2), modelo.predict(entrada_esc)[0], round(max(probabilidades) * 100, 2)
+    try:
+        if modelo is None or escalador is None or clases_modelo is None:
+            raise ValueError("Modelo no está cargado correctamente")
+        
+        if not entrada or len(entrada) == 0 or len(entrada[0]) == 0:
+            raise ValueError("Datos de entrada vacíos o incompletos")
+            
+        entrada_esc = escalador.transform(entrada)
+        probabilidades = modelo.predict_proba(entrada_esc)[0]
+        
+        if 'ninguno' in clases_modelo:
+            prob_ninguno = probabilidades[np.where(clases_modelo == 'ninguno')[0][0]]
+            return (
+                round((1 - prob_ninguno) * 100, 2), 
+                modelo.predict(entrada_esc)[0], 
+                round(max(probabilidades) * 100, 2)
+            )
+        else:
+            return (
+                round((1 - max(probabilidades)) * 100, 2), 
+                modelo.predict(entrada_esc)[0], 
+                round(max(probabilidades) * 100, 2)
+            )
+    except Exception as e:
+        print(f" Error en calcular_probabilidad_abandono: {str(e)}")
+        return 0, "Error en predicción", 0
 
 def procesar_estudiantes(df):
     estudiantes_analizados = []
     
-    if modelo and escalador and clases_modelo is not None:
-        columnas_numericas = [
-            'comprension', 'emocion_general', 'estres_estudios',
-            'apoyo_familiar', 'amistades_escuela', 'relacion_profesores',
-            'responsabilidades', 'valor_educacion', 'probabilidad_terminar'
-        ]
-        
-        for col in columnas_numericas:
-            if col in df.columns:
-                df[col] = pd.to_numeric(df[col], errors='coerce')
-        
-        df = df.dropna(subset=columnas_numericas)
-        
-        for index, row in df.iterrows():
+    if modelo is None or escalador is None or clases_modelo is None:
+        print("⚠️ Advertencia: Modelos no disponibles para procesamiento")
+        return estudiantes_analizados
+    
+    columnas_requeridas = [
+        'comprension', 'emocion_general', 'estres_estudios',
+        'apoyo_familiar', 'amistades_escuela', 'relacion_profesores',
+        'responsabilidades', 'valor_educacion', 'probabilidad_terminar'
+    ]
+    
+    # Verificar columnas disponibles
+    columnas_disponibles = [col for col in columnas_requeridas if col in df.columns]
+    if len(columnas_disponibles) < 5:  # Mínimo 5 variables requeridas
+        print(f" Error: Solo {len(columnas_disponibles)} columnas disponibles de {len(columnas_requeridas)} requeridas")
+        return estudiantes_analizados
+    
+    # Convertir a numérico y limpiar
+    for col in columnas_disponibles:
+        df[col] = pd.to_numeric(df[col], errors='coerce')
+    
+    df = df.dropna(subset=columnas_disponibles)
+    
+    if df.empty:
+        print(" Advertencia: DataFrame vacío después de limpieza")
+        return estudiantes_analizados
+    
+    for index, row in df.iterrows():
+        try:
             entrada = [[
                 row['comprension'],
                 row['emocion_general'],
@@ -67,21 +107,21 @@ def procesar_estudiantes(df):
                 row['probabilidad_terminar']
             ]]
 
-            try:
-                prob_abandono, motivo, confianza = calcular_probabilidad_abandono(entrada)
-                riesgo_alto = row['probabilidad_terminar'] <= 2
-                
-                estudiantes_analizados.append({
-                    'id': index,
-                    'nombre': row.get('nombre', f'Estudiante {index}'),
-                    'probabilidad_abandono': prob_abandono,
-                    'riesgo_alto': riesgo_alto,
-                    'motivo_principal': motivo,
-                    'confianza': confianza,
-                    'fecha_registro': row.get('fecha_registro', 'N/A')
-                })
-            except Exception as e:
-                print(f"Error procesando estudiante {index}: {str(e)}")
+            prob_abandono, motivo, confianza = calcular_probabilidad_abandono(entrada)
+            riesgo_alto = row['probabilidad_terminar'] <= 2 if 'probabilidad_terminar' in columnas_disponibles else False
+            
+            estudiantes_analizados.append({
+                'id': index,
+                'nombre': row.get('nombre', f'Estudiante {index}'),
+                'probabilidad_abandono': prob_abandono,
+                'riesgo_alto': riesgo_alto,
+                'motivo_principal': motivo,
+                'confianza': confianza,
+                'fecha_registro': row.get('fecha_registro', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+            })
+        except Exception as e:
+            print(f"⚠️ Error procesando estudiante {index}: {str(e)}")
+            continue
     
     estudiantes_analizados.sort(key=lambda x: x['probabilidad_abandono'], reverse=True)
     return estudiantes_analizados

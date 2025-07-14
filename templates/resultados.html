@@ -5,118 +5,425 @@
     <title>Resultados del Estudiante</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- SheetJS (para exportar a Excel) -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
+    <!-- html2pdf (para exportar a PDF) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- Estilos personalizados -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/resultados.css') }}">
+    <style>
+        .card-dashboard {
+            transition: transform 0.3s, box-shadow 0.3s;
+            height: 100%;
+        }
+        .card-dashboard:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .progress-thick {
+            height: 1.5rem;
+        }
+        .emoji-icon {
+            font-size: 1.5rem;
+            margin-right: 0.5rem;
+        }
+        .metric-card {
+            border-left: 4px solid;
+        }
+        .metric-card.academic {
+            border-left-color: #4e73df;
+        }
+        .metric-card.emotional {
+            border-left-color: #1cc88a;
+        }
+        .metric-card.social {
+            border-left-color: #36b9cc;
+        }
+        .metric-card.risk {
+            border-left-color: #f6c23e;
+        }
+        /* Estilo para ocultar elementos al exportar PDF */
+        @media print {
+            .no-export {
+                display: none !important;
+            }
+        }
+    </style>
 </head>
 <body>
 
   {% include 'navbar.html' %}
 
-  <!-- Contenedor -->
-  <div class="container mt-5 pt-5">
-    <h1 class="text-center">Resultados del Estudiante</h1>
-
-    <!-- Sección de resumen de respuestas -->
-    <div class="card mb-4">
-      <div class="card-header bg-primary text-white">
-        <h3 class="mb-0">Resumen de tus respuestas:</h3>
+  <!-- Contenedor principal con ID para exportar PDF -->
+  <div class="container mt-5 pt-4" id="contentToExport">
+    <!-- Header con título y botones -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1 class="h2 mb-0 text-primary">
+        <i class="bi bi-person-badge"></i> Resultados del Estudiante
+      </h1>
+      <div>
+        <button id="exportToPDF" class="btn btn-danger me-2">
+          <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
+        </button>
+        <button id="exportToExcel" class="btn btn-success me-2">
+          <i class="bi bi-file-earmark-excel"></i> Exportar Excel
+        </button>
+        <a href="{{ url_for('formulario') }}" class="btn btn-primary me-2">
+          <i class="bi bi-arrow-left"></i> Volver
+        </a>
       </div>
-      <ul class="list-group list-group-flush">
-        <li class="list-group-item"><strong>Comprensión en clase:</strong> {{ comprension }}</li>
-        <li class="list-group-item"><strong>Emoción al ir a la escuela:</strong> {{ emocion_general }}</li>
-        <li class="list-group-item"><strong>Frecuencia de estrés por estudios:</strong> {{ estres_estudios }}</li>
-        <li class="list-group-item"><strong>Apoyo familiar:</strong> {{ apoyo_familiar }}</li>
-        <li class="list-group-item"><strong>¿Tiene amistades en la escuela?:</strong> {{ amistades_escuela }}</li>
-        <li class="list-group-item"><strong>Relación con profesores:</strong> {{ relacion_profesores }}</li>
-        <li class="list-group-item"><strong>Responsabilidades fuera de la escuela:</strong> {{ responsabilidades }}</li>
-        <li class="list-group-item"><strong>Valor que da a lo que aprende:</strong> {{ valor_educacion }}</li>
-        <li class="list-group-item"><strong>Probabilidad de terminar el ciclo escolar:</strong> {{ probabilidad_terminar }}</li>
-      </ul>
     </div>
 
-    <!-- Sección de evaluación del modelo -->
-    <div class="card mb-4">
-      <div class="card-header bg-info text-white">
-        <h3 class="mb-0">Evaluación del modelo:</h3>
-      </div>
-      <div class="card-body">
-        {% if error %}
-          <div class="alert alert-danger">{{ error }}</div>
-        {% else %}
-          <div class="mb-3">
-            <h5>Probabilidad de abandono: 
-              {% if probabilidad_abandono != 'N/A' %}
-                <span class="badge bg-{{ 'danger' if probabilidad_abandono|float > 50 else 'warning' }}">
-                  {{ probabilidad_abandono }}%
-                </span>
-              {% else %}
-                <span class="badge bg-secondary">No disponible</span>
-              {% endif %}
-            </h5>
+    <!-- Primera fila: Métricas clave -->
+    <div class="row mb-4">
+      <!-- Probabilidad de abandono -->
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2 metric-card risk">
+          <div class="card-body">
+            <div class="row no-gutters align-items-center">
+              <div class="col mr-2">
+                <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                  Probabilidad de abandono
+                </div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                  {% if probabilidad_abandono != 'N/A' %}
+                    {{ probabilidad_abandono }}%
+                  {% else %}
+                    No disponible
+                  {% endif %}
+                </div>
+              </div>
+              <div class="col-auto">
+                <i class="bi bi-exclamation-triangle-fill text-danger fa-2x"></i>
+              </div>
+            </div>
             {% if probabilidad_abandono != 'N/A' %}
-            <div class="progress">
-              <div class="progress-bar progress-bar-striped bg-{{ 'danger' if probabilidad_abandono|float > 50 else 'warning' }}" 
-                   role="progressbar" 
-                    
-                   aria-valuenow="{{ probabilidad_abandono }}" 
-                   aria-valuemin="0" 
-                   aria-valuemax="100">
+            <div class="mt-2">
+              <div class="progress progress-thick">
+                <div class="progress-bar bg-{{ 'danger' if probabilidad_abandono|float > 50 else 'warning' }}" 
+                     role="progressbar" 
+                     
+                     aria-valuenow="{{ probabilidad_abandono }}" 
+                     aria-valuemin="0" 
+                     aria-valuemax="100">
+                </div>
               </div>
             </div>
             {% endif %}
           </div>
+        </div>
+      </div>
 
-          <div class="alert alert-{{ 'danger' if riesgo_alto else 'success' }}">
-            <h5 class="alert-heading">Diagnóstico:</h5>
-            <p class="mb-0">
-              {{ motivo_principal }} 
-              {% if confianza_principal != 'N/A' %}
-                <span class="badge bg-secondary">{{ confianza_principal }}% de confianza</span>
-              {% endif %}
-            </p>
+      <!-- Diagnóstico principal -->
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2 metric-card">
+          <div class="card-body">
+            <div class="row no-gutters align-items-center">
+              <div class="col mr-2">
+                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                  Diagnóstico principal
+                </div>
+                <div class="h6 mb-0 font-weight-bold text-gray-800">
+                  {{ motivo_principal|truncate(40) }}
+                  {% if confianza_principal != 'N/A' %}
+                    <span class="badge bg-secondary ms-1">{{ confianza_principal }}%</span>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="col-auto">
+                <i class="bi bi-clipboard2-pulse-fill text-info fa-2x"></i>
+              </div>
+            </div>
             {% if riesgo_alto %}
-              <hr>
-              <p class="mb-0">⚠️ <strong>Alerta:</strong> Alto riesgo de abandono escolar detectado</p>
+            <div class="mt-2">
+              <span class="badge bg-danger">
+                <i class="bi bi-exclamation-octagon-fill"></i> Alto riesgo
+              </span>
+            </div>
             {% endif %}
           </div>
+        </div>
+      </div>
 
-          {% if motivos_secundarios %}
-          <div class="mt-3">
-            <h5>Otras posibles causas:</h5>
-            <ul class="list-group">
-              {% for motivo, confianza in motivos_secundarios %}
-              <li class="list-group-item d-flex justify-content-between align-items-center">
-                {{ motivo }}
-                <span class="badge bg-primary rounded-pill">{{ confianza }}%</span>
-              </li>
-              {% endfor %}
-            </ul>
+      <!-- Comprensión en clase -->
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2 metric-card academic">
+          <div class="card-body">
+            <div class="row no-gutters align-items-center">
+              <div class="col mr-2">
+                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                  Comprensión en clase
+                </div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                  {{ comprension }}
+                </div>
+              </div>
+              <div class="col-auto">
+                <i class="bi bi-book-fill text-primary fa-2x"></i>
+              </div>
+            </div>
           </div>
-          {% endif %}
+        </div>
+      </div>
+
+      <!-- Relación con profesores -->
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2 metric-card social">
+          <div class="card-body">
+            <div class="row no-gutters align-items-center">
+              <div class="col mr-2">
+                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                  Relación con profesores
+                </div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                  {{ relacion_profesores }}
+                </div>
+              </div>
+              <div class="col-auto">
+                <i class="bi bi-people-fill text-success fa-2x"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Segunda fila: Contenido principal -->
+    <div class="row">
+      <!-- Columna izquierda: Gráfico y detalles -->
+      <div class="col-lg-8">
+        <!-- Gráfico radar -->
+        <div class="card shadow mb-4 card-dashboard">
+          <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between bg-success text-white">
+            <h6 class="m-0 font-weight-bold">
+              <i class="bi bi-radar"></i> Perfil de Indicadores Clave
+            </h6>
+          </div>
+          <div class="card-body">
+            <div class="chart-area">
+              <canvas id="graficoResultados" width="100%" height="250"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Otras posibles causas -->
+        {% if motivos_secundarios %}
+        <div class="card shadow mb-4 card-dashboard">
+          <div class="card-header py-3 bg-info text-white">
+            <h6 class="m-0 font-weight-bold">
+              <i class="bi bi-list-check"></i> Otras posibles causas
+            </h6>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              {% for motivo, confianza in motivos_secundarios %}
+              <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                  <div class="card-body">
+                    <h6 class="card-title">{{ motivo }}</h6>
+                    <div class="progress">
+                      <div class="progress-bar bg-primary" role="progressbar" 
+                           
+                           aria-valuenow="{{ confianza }}" 
+                           aria-valuemin="0" 
+                           aria-valuemax="100">
+                        {{ confianza }}%
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
         {% endif %}
       </div>
+
+      <!-- Columna derecha: Detalles del estudiante -->
+      <div class="col-lg-4">
+        <!-- Detalles emocionales -->
+        <div class="card shadow mb-4 card-dashboard">
+          <div class="card-header py-3 bg-warning text-white">
+            <h6 class="m-0 font-weight-bold">
+              <i class="bi bi-emoji-smile"></i> Bienestar Emocional
+            </h6>
+          </div>
+          <div class="card-body">
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                Emoción al ir a la escuela
+                <span class="badge bg-primary rounded-pill">{{ emocion_general }}</span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                Frecuencia de estrés
+                <span class="badge bg-{{ 'danger' if estres_estudios|int >= 4 else 'warning' }} rounded-pill">
+                  {{ estres_estudios }}
+                </span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                Valor que da a lo que aprende
+                <span class="badge bg-success rounded-pill">{{ valor_educacion }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Entorno social -->
+        <div class="card shadow mb-4 card-dashboard">
+          <div class="card-header py-3 bg-primary text-white">
+            <h6 class="m-0 font-weight-bold">
+              <i class="bi bi-people-fill"></i> Entorno Social
+            </h6>
+          </div>
+          <div class="card-body">
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                Apoyo familiar
+                <span class="badge bg-{{ 'success' if apoyo_familiar|int >= 4 else 'warning' }} rounded-pill">
+                  {{ apoyo_familiar }}
+                </span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                Amistades en la escuela
+                <span class="badge bg-{{ 'success' if amistades_escuela == 'Sí' else 'danger' }} rounded-pill">
+                  {{ amistades_escuela }}
+                </span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Compromiso académico -->
+        <div class="card shadow mb-4 card-dashboard">
+          <div class="card-header py-3 bg-secondary text-white">
+            <h6 class="m-0 font-weight-bold">
+              <i class="bi bi-award-fill"></i> Compromiso Académico
+            </h6>
+          </div>
+          <div class="card-body">
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                Probabilidad de terminar
+                <span class="badge bg-{{ 'success' if probabilidad_terminar|int >= 4 else 'warning' }} rounded-pill">
+                  {{ probabilidad_terminar }}
+                </span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                Responsabilidades externas
+                <span class="badge bg-{{ 'danger' if responsabilidades == 'Sí' else 'success' }} rounded-pill">
+                  {{ responsabilidades }}
+                </span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Visualización gráfica -->
-    <div class="card mb-4">
-      <div class="card-header bg-success text-white">
-        <h3 class="mb-0">Visualización gráfica</h3>
+    <!-- Pie de página con botones -->
+    <div class="d-flex justify-content-between mt-4 mb-5 no-export">
+      <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-bar-chart-line"></i> Ver estadísticas generales
+      </a>
+      <div>
+        <button id="exportToPDF2" class="btn btn-danger me-2">
+          <i class="bi bi-file-earmark-pdf"></i> Descargar PDF
+        </button>
+        <button id="exportToExcel2" class="btn btn-success me-2">
+          <i class="bi bi-file-earmark-excel"></i> Descargar Excel
+        </button>
+        <a href="{{ url_for('formulario') }}" class="btn btn-primary">
+          <i class="bi bi-arrow-repeat"></i> Realizar nuevo test
+        </a>
       </div>
-      <div class="card-body">
-        <canvas id="graficoResultados" width="400" height="250"></canvas>
-      </div>
-    </div>
-
-    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-      <a href="{{ url_for('formulario') }}" class="btn btn-primary me-md-2">← Volver al formulario</a>
-      <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">Ver estadísticas generales</a>
     </div>
   </div>
 
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Script para exportar a Excel -->
+  <script>
+    function exportToExcel() {
+      // Crear un libro de trabajo
+      const wb = XLSX.utils.book_new();
+      
+      // Crear datos para la hoja de cálculo
+      const data = [
+        ["RESULTADOS DEL ESTUDIANTE", ""],
+        ["Fecha", new Date().toLocaleDateString()],
+        [],
+        ["MÉTRICAS ACADÉMICAS", ""],
+        ["Comprensión en clase", "{{ comprension }}"],
+        ["Relación con profesores", "{{ relacion_profesores }}"],
+        ["Valor que da a lo que aprende", "{{ valor_educacion }}"],
+        ["Probabilidad de terminar ciclo", "{{ probabilidad_terminar }}"],
+        [],
+        ["BIENESTAR EMOCIONAL", ""],
+        ["Emoción al ir a la escuela", "{{ emocion_general }}"],
+        ["Frecuencia de estrés", "{{ estres_estudios }}"],
+        [],
+        ["ENTORNO SOCIAL", ""],
+        ["Apoyo familiar", "{{ apoyo_familiar }}"],
+        ["Amistades en la escuela", "{{ amistades_escuela }}"],
+        ["Responsabilidades externas", "{{ responsabilidades }}"],
+        [],
+        ["EVALUACIÓN DEL MODELO", ""],
+        ["Probabilidad de abandono", "{{ probabilidad_abandono }}%"],
+        ["Diagnóstico principal", "{{ motivo_principal }}"],
+        ["Confianza diagnóstico", "{{ confianza_principal }}%"],
+        ["Riesgo alto", "{{ 'Sí' if riesgo_alto else 'No' }}"]
+      ];
+
+      // Convertir los datos a una hoja de trabajo
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      
+      // Ajustar el ancho de las columnas
+      ws['!cols'] = [{wch: 30}, {wch: 20}];
+      
+      // Añadir la hoja de trabajo al libro
+      XLSX.utils.book_append_sheet(wb, ws, "Resultados");
+      
+      // Generar el archivo Excel y descargarlo
+      XLSX.writeFile(wb, "Resultados_Estudiante.xlsx");
+    }
+
+    // Asignar la función a ambos botones
+    document.getElementById('exportToExcel').addEventListener('click', exportToExcel);
+    document.getElementById('exportToExcel2').addEventListener('click', exportToExcel);
+  </script>
+
+  <!-- Script para exportar a PDF -->
+  <script>
+    function exportToPDF() {
+      // Configuración del PDF
+      const element = document.getElementById('contentToExport');
+      const opt = {
+        margin: 10,
+        filename: 'Resultados_Estudiante.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2,
+          logging: true,
+          useCORS: true,
+          allowTaint: true
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      };
+
+      // Generar el PDF
+      html2pdf().set(opt).from(element).save();
+    }
+
+    // Asignar la función a ambos botones
+    document.getElementById('exportToPDF').addEventListener('click', exportToPDF);
+    document.getElementById('exportToPDF2').addEventListener('click', exportToPDF);
+  </script>
 
   <!-- Chart.js lógica -->
   <script>
@@ -124,7 +431,7 @@
     const chartData = {
       labels: ['Comprensión', 'Estrés', 'Apoyo', 'Profesores', 'Terminar'],
       datasets: [{
-        label: 'Indicadores clave (1-5)',
+        label: 'Indicadores clave (escala 1-5)',
         data: [
           Number("{{ comprension }}"),
           Number("{{ estres_estudios }}"),
@@ -132,29 +439,12 @@
           Number("{{ relacion_profesores }}"),
           Number("{{ probabilidad_terminar }}")
         ],
-        backgroundColor: [
-          'rgba(75, 192, 192, 0.5)',
-          'rgba(255, 159, 64, 0.5)',
-          'rgba(54, 162, 235, 0.5)',
-          'rgba(153, 102, 255, 0.5)',
-          'rgba(255, 99, 132, 0.5)'
-        ],
-        borderColor: [
-          'rgba(75, 192, 192, 1)',
-          'rgba(255, 159, 64, 1)',
-          'rgba(54, 162, 235, 1)',
-          'rgba(153, 102, 255, 1)',
-          'rgba(255, 99, 132, 1)'
-        ],
-        borderWidth: 1,
-        pointBackgroundColor: [
-          'rgba(75, 192, 192, 1)',
-          'rgba(255, 159, 64, 1)',
-          'rgba(54, 162, 235, 1)',
-          'rgba(153, 102, 255, 1)',
-          'rgba(255, 99, 132, 1)'
-        ],
-        pointRadius: 4
+        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 2,
+        pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+        pointRadius: 5,
+        pointHoverRadius: 7
       }]
     };
 
@@ -162,32 +452,50 @@
       type: 'radar',
       data: chartData,
       options: {
+        responsive: true,
+        maintainAspectRatio: false,
         scales: {
           r: {
-            angleLines: { display: true },
+            angleLines: { display: true, color: 'rgba(0, 0, 0, 0.1)' },
             suggestedMin: 0,
             suggestedMax: 5,
             ticks: { 
               stepSize: 1,
-              backdropColor: 'rgba(0, 0, 0, 0.1)'
+              backdropColor: 'rgba(255, 255, 255, 0.75)',
+              color: '#6c757d',
+              font: { weight: 'bold' }
             },
-            grid: { color: 'rgba(0, 0, 0, 0.1)' }
+            grid: { 
+              color: 'rgba(0, 0, 0, 0.05)',
+              circular: true
+            },
+            pointLabels: {
+              font: { size: 12, weight: 'bold' }
+            }
           }
         },
         plugins: {
           legend: { 
             position: 'top',
-            labels: { font: { size: 12 } }
+            labels: { 
+              font: { size: 14, weight: 'bold' },
+              padding: 20
+            }
           },
           tooltip: { 
             callbacks: { 
               label: ctx => ` ${ctx.dataset.label}: ${ctx.raw}/5`,
-              title: items => items[0].label
-            } 
+              title: items => items[0].label.toUpperCase()
+            },
+            bodyFont: { size: 14, weight: 'bold' },
+            titleFont: { size: 12 }
           }
         },
         elements: {
-          line: { tension: 0.1 }
+          line: { 
+            tension: 0.1,
+            borderWidth: 3
+          }
         }
       }
     });
